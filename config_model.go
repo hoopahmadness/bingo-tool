@@ -7,16 +7,16 @@ import (
 )
 
 type Config struct {
-	Filepath  string   `json:"filepath"`
-	Names     []string `json:"names"`
-	FirstRect struct {
-		Origin         image.Point `json:"origin"`
-		OppositeCorner image.Point `json:"oppositeCorner"`
-	} `json:"firstRect"`
+	Filepath       string      `json:"filepath"`
+	Names          []string    `json:"names"`
 	NumRows        int         `json:"numRows"`
 	NumColumns     int         `json:"numColumns"`
 	NextRectOrigin image.Point `json:"nextRectOrigin"`
 	Seed           int64       `json:"seedInteger"`
+	FirstRect      struct {
+		Origin         image.Point `json:"origin"`
+		OppositeCorner image.Point `json:"oppositeCorner"`
+	} `json:"firstRect"`
 }
 
 func testConfig() Config {

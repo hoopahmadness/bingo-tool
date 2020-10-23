@@ -161,6 +161,7 @@ func generatePermutation(r *rand.Rand, rows, columns, num int) [][]int {
 		indices = append(indices, ii)
 		useFreespace = !useFreespace
 	}
+
 	if useFreespace {
 		freespace = (columns*rows - 1) / 2
 		fmt.Sprintf("freespace is...%d\n", freespace)
