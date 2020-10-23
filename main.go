@@ -25,16 +25,18 @@ func main() {
 	board := importJPG(config.Filepath)
 	//generate rectangles from input points
 	firstTile := Tile{config.FirstRect.Origin, config.FirstRect.OppositeCorner}
-	tileArray := generateTileArray(firstTile, config.NextRectOrigin)
+	tileArray := generateTileArray(firstTile, config.NextRectOrigin, config.NumRows, config.NumColumns)
 
 	//create window showing image with rectangles highlighted, ask to continue
 	//save subsets of bingo board into array
 	subImageArray := generateSubImageArray(tileArray, board)
 
-	//loop over list of names
 	r := rand.New(rand.NewSource(config.Seed))
-	for _, person := range config.Names {
-		shuffledArr := generatePermutation(r)
+	permutations := generatePermutation(r, config.NumRows, config.NumColumns, len(config.Names))
+
+	//loop over list of names
+	for perm, person := range config.Names {
+		shuffledArr := permutations[perm]
 		fmt.Println(person)
 		fmt.Println(shuffledArr)
 		//shuffle board
@@ -58,7 +60,7 @@ func readConfig(pwd string) Config {
 		}
 		os.Exit(0)
 	}
-	fmt.Println(string(dat))
+	// fmt.Println(string(dat))
 	return parseConfig(string(dat))
 }
 
@@ -85,7 +87,7 @@ func importJPG(filename string) draw.Image {
 }
 
 //function to create array of rectangles (first Rectangle, nextCorner Point) []Tiles
-func generateTileArray(first Tile, nextCorner image.Point) []Tile {
+func generateTileArray(first Tile, nextCorner image.Point, rows, columns int) []Tile {
 	origin := first.Origin
 
 	tileWidth := first.OppositeCorner.X - first.Origin.X
@@ -95,8 +97,8 @@ func generateTileArray(first Tile, nextCorner image.Point) []Tile {
 	gapHeight := nextCorner.Y - first.OppositeCorner.Y
 
 	tileArray := []Tile{}
-	for row := 0; row < 5; row++ {
-		for column := 0; column < 5; column++ {
+	for row := 0; row < rows; row++ {
+		for column := 0; column < columns; column++ {
 			// index = 5*row + column
 			tileOriginX := origin.X + column*(tileWidth+gapWidth)
 			tileOriginY := origin.Y + row*(tileHeight+gapHeight)
@@ -132,7 +134,8 @@ func getSubImage(img draw.Image, bounds Tile) (subImage *image.RGBA) {
 }
 
 func writeImage(img draw.Image, filename string) {
-	fmt.Println("Attempting to write " + filename)
+	// fmt.Println("Attempting to write " + filename)
+
 	// outputFile is a File type which satisfies Writer interface
 	outputFile, err := os.Create(filename)
 	if err != nil {
@@ -148,18 +151,37 @@ func writeImage(img draw.Image, filename string) {
 
 }
 
-func generatePermutation(r *rand.Rand) []int {
-	indices := []int{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24}
-	shuffledIndices := []int{}
-	for _, i := range r.Perm(len(indices)) {
-		shuffledIndices = append(shuffledIndices, indices[i])
+// takes in a Rand object and dimensions of the board and number of Names, calculates all random permutation of tile indices
+func generatePermutation(r *rand.Rand, rows, columns, num int) [][]int {
+	indices := []int{}
+	permutations := [][]int{}
+	useFreespace := false
+	freespace := 0
+	for ii := 0; ii < columns*rows; ii++ {
+		indices = append(indices, ii)
+		useFreespace = !useFreespace
+	}
+	if useFreespace {
+		freespace = (columns*rows - 1) / 2
+		fmt.Sprintf("freespace is...%d\n", freespace)
+		indices = append(indices[:freespace], indices[freespace+1:]...) //slice out the freespace before shuffling
 	}
 
-	shuffledIndices = append(shuffledIndices, 0)
-	copy(shuffledIndices[13:], shuffledIndices[12:])
-	shuffledIndices[12] = 12
+	for ii := 1; ii <= num; ii++ {
+		shuffledIndices := []int{}
+		for _, i := range r.Perm(len(indices)) {
+			shuffledIndices = append(shuffledIndices, indices[i])
+		}
 
-	return shuffledIndices
+		if useFreespace {
+			shuffledIndices = append(shuffledIndices, 0) //lengthen the array
+			copy(shuffledIndices[freespace+1:], shuffledIndices[freespace:])
+			shuffledIndices[freespace] = freespace
+		}
+		permutations = append(permutations, shuffledIndices)
+	}
+
+	return permutations
 }
 
 //function to create new image from subsets (main goimage, tiles []goimage, rects []Rectangle) goimage

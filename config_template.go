@@ -7,6 +7,8 @@ const (
 		"Steve",
 		"Caleb"
 	],
+	"numColumns": 5,
+	"numRows": 5,
 	"firstRect": {
 		"origin": {
 			"X":57,
