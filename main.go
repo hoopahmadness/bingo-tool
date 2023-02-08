@@ -19,10 +19,13 @@ func main() {
 		panic(err)
 	}
 	config = readConfig(pwd)
+
+
 	//stop here and ask to continue, else end
 
 	//import image as go image
 	board := importJPG(config.Filepath)
+
 	//generate rectangles from input points
 	firstTile := Tile{config.FirstRect.Origin, config.FirstRect.OppositeCorner}
 	tileArray := generateTileArray(firstTile, config.NextRectOrigin, config.NumRows, config.NumColumns)
@@ -30,9 +33,12 @@ func main() {
 	//create window showing image with rectangles highlighted, ask to continue
 	//save subsets of bingo board into array
 	subImageArray := generateSubImageArray(tileArray, board)
+	
+	// add subsets of any extra squares we want to shuffle in
+	subImageArray = addExtraSquares(config.ExtraSquares, tileArray, subImageArray)
 
 	r := rand.New(rand.NewSource(config.Seed))
-	permutations := generatePermutation(r, config.NumRows, config.NumColumns, len(config.Names))
+	permutations := generatePermutation(r, config.NumRows, config.NumColumns, len(config.Names), len(subImageArray))
 
 	//loop over list of names
 	for perm, person := range config.Names {
@@ -47,7 +53,7 @@ func main() {
 	}
 }
 
-//function to read config from file (filename string) Config
+// function to read config from file (filename string) Config
 func readConfig(pwd string) Config {
 	configPath := pwd + "/bingo-config.json"
 	dat, err := ioutil.ReadFile(configPath)
@@ -64,7 +70,7 @@ func readConfig(pwd string) Config {
 	return parseConfig(string(dat))
 }
 
-//function to get photo (filename string) go image
+// function to get photo (filename string) go image
 func importJPG(filename string) draw.Image {
 	existingImageFile, err := os.Open(filename)
 	if err != nil {
@@ -86,7 +92,23 @@ func importJPG(filename string) draw.Image {
 
 }
 
-//function to create array of rectangles (first Rectangle, nextCorner Point) []Tiles
+// addExtraSquares runs through each extra board defined in the config, and for each of these it 
+// appends the correct number of generated image tiles to the given subImageArray
+func addExtraSquares (extras []ExtraSquare, tiles []Tile, subImageArray []draw.Image) []draw.Image {
+	for _, extraBoard := range extras {
+		numExtras := extraBoard.NumOfSquares
+		if numExtras > len(tiles) {
+			fmt.Println("Your config calls for too many extra squares from a single board")
+			numExtras = len(tiles)
+		}
+		extraBoardImg := importJPG(extraBoard.Filepath)
+		extraSubImageArray := generateSubImageArray(tiles, extraBoardImg)
+		subImageArray = append(subImageArray, extraSubImageArray[0:numExtras-1]...)
+	}
+	return subImageArray
+}
+
+// function to create array of rectangles (first Rectangle, nextCorner Point) []Tiles
 func generateTileArray(first Tile, nextCorner image.Point, rows, columns int) []Tile {
 	origin := first.Origin
 
@@ -120,7 +142,7 @@ func generateSubImageArray(tiles []Tile, img draw.Image) []draw.Image {
 	return imgArray
 }
 
-//function to create subset of image (image goimage, bounds Rectangle) goimage
+// function to create subset of image (image goimage, bounds Rectangle) goimage
 func getSubImage(img draw.Image, bounds Tile) (subImage *image.RGBA) {
 	x, y, _ := bounds.getDimensions()
 	subImage = image.NewRGBA(image.Rect(0, 0, x, y))
@@ -152,14 +174,16 @@ func writeImage(img draw.Image, filename string) {
 }
 
 // takes in a Rand object and dimensions of the board and number of Names, calculates all random permutation of tile indices
-func generatePermutation(r *rand.Rand, rows, columns, num int) [][]int {
+func generatePermutation(r *rand.Rand, rows, columns, numNames, numTiles int) [][]int {
 	indices := []int{}
 	permutations := [][]int{}
 	useFreespace := false
 	freespace := 0
-	for ii := 0; ii < columns*rows; ii++ {
+	for ii := 0; ii < numTiles; ii++ {
 		indices = append(indices, ii)
+		if ii < columns*rows {
 		useFreespace = !useFreespace
+		}
 	}
 
 	if useFreespace {
@@ -168,7 +192,7 @@ func generatePermutation(r *rand.Rand, rows, columns, num int) [][]int {
 		indices = append(indices[:freespace], indices[freespace+1:]...) //slice out the freespace before shuffling
 	}
 
-	for ii := 1; ii <= num; ii++ {
+	for ii := 1; ii <= numNames; ii++ {
 		shuffledIndices := []int{}
 		for _, i := range r.Perm(len(indices)) {
 			shuffledIndices = append(shuffledIndices, indices[i])
@@ -179,13 +203,13 @@ func generatePermutation(r *rand.Rand, rows, columns, num int) [][]int {
 			copy(shuffledIndices[freespace+1:], shuffledIndices[freespace:])
 			shuffledIndices[freespace] = freespace
 		}
-		permutations = append(permutations, shuffledIndices)
+		permutations = append(permutations, shuffledIndices[:columns*rows])
 	}
 
 	return permutations
 }
 
-//function to create new image from subsets (main goimage, tiles []goimage, rects []Rectangle) goimage
+// function to create new image from subsets (main goimage, tiles []goimage, rects []Rectangle) goimage
 func shuffleBoard(board draw.Image, images []draw.Image, tiles []Tile, newIndices []int) draw.Image {
 
 	//	//loop over array

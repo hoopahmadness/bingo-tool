@@ -17,6 +17,12 @@ type Config struct {
 		Origin         image.Point `json:"origin"`
 		OppositeCorner image.Point `json:"oppositeCorner"`
 	} `json:"firstRect"`
+	ExtraSquares []ExtraSquare `json:"extraSquares"`
+}
+
+type ExtraSquare struct {
+	Filepath     string `json:"filepath"`
+	NumOfSquares int    `json:"numOfSquares"`
 }
 
 func testConfig() Config {
@@ -27,6 +33,7 @@ func testConfig() Config {
 
 func parseConfig(jsonStr string) Config {
 	var newConfig Config
+	newConfig.ExtraSquares = []ExtraSquare{}
 	err := json.Unmarshal([]byte(jsonStr), &newConfig)
 	if err != nil {
 		fmt.Println("ERROR UNMARSHALLING")

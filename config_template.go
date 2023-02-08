@@ -23,6 +23,10 @@ const (
 		"X": 427,
 		"Y": 778
 	},
-	"seedInteger": 39599
+	"seedInteger": 39599,
+	"extraSquares": [
+		"filepath": "./cf0edc44c63c447d8f879bd3d54e43ea.jpeg",
+		"numOfSquares: 6
+	]
 }`
 )
