@@ -2,7 +2,7 @@ package main
 
 const (
 	configTemplate = `{
-	"filepath": "./cf0edc44c63c447d8f879bd3d54e43ea.jpeg",
+	"filepath": "./your_board.png",
 	"names": [
 		"Steve",
 		"Caleb"
@@ -23,10 +23,13 @@ const (
 		"X": 427,
 		"Y": 778
 	},
+	"testing": false,
 	"seedInteger": 39599,
 	"extraSquares": [
-		"filepath": "./cf0edc44c63c447d8f879bd3d54e43ea.jpeg",
-		"numOfSquares: 6
+		{
+			"filepath": "./your_extra_board.png",
+			"numOfSquares": 20	
+		}
 	]
 }`
 )
