@@ -13,6 +13,7 @@ type Config struct {
 	NumColumns     int         `json:"numColumns"`
 	NextRectOrigin image.Point `json:"nextRectOrigin"`
 	Seed           int64       `json:"seedInteger"`
+	Test           bool        `json:"testing"`
 	FirstRect      struct {
 		Origin         image.Point `json:"origin"`
 		OppositeCorner image.Point `json:"oppositeCorner"`

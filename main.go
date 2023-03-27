@@ -3,8 +3,9 @@ package main
 import (
 	"fmt"
 	"image"
+	"image/color"
 	"image/draw"
-	"image/jpeg"
+	"image/png"
 	"io/ioutil"
 	"math/rand"
 	"os"
@@ -20,12 +21,10 @@ func main() {
 	}
 	config = readConfig(pwd)
 
-
 	//stop here and ask to continue, else end
 
 	//import image as go image
-	board := importJPG(config.Filepath)
-
+	board := importPNG(config.Filepath)
 	//generate rectangles from input points
 	firstTile := Tile{config.FirstRect.Origin, config.FirstRect.OppositeCorner}
 	tileArray := generateTileArray(firstTile, config.NextRectOrigin, config.NumRows, config.NumColumns)
@@ -33,12 +32,15 @@ func main() {
 	//create window showing image with rectangles highlighted, ask to continue
 	//save subsets of bingo board into array
 	subImageArray := generateSubImageArray(tileArray, board)
-	
+
 	// add subsets of any extra squares we want to shuffle in
 	subImageArray = addExtraSquares(config.ExtraSquares, tileArray, subImageArray)
 
+	//if we're testing, blank out the board so we can clearly see where the tiles are defined
+	board = prepareTestBoard(board, config.Test)
+
 	r := rand.New(rand.NewSource(config.Seed))
-	permutations := generatePermutation(r, config.NumRows, config.NumColumns, len(config.Names), len(subImageArray))
+	permutations := generatePermutation(r, config.NumRows, config.NumColumns, len(config.Names), len(subImageArray), config.Test)
 
 	//loop over list of names
 	for perm, person := range config.Names {
@@ -49,7 +51,7 @@ func main() {
 		newBoard := shuffleBoard(board, subImageArray, tileArray, shuffledArr)
 
 		//save new copy of image
-		writeImage(newBoard, fmt.Sprintf("%s.jpg", person))
+		writeImage(newBoard, fmt.Sprintf("%s.png", person))
 	}
 }
 
@@ -71,7 +73,7 @@ func readConfig(pwd string) Config {
 }
 
 // function to get photo (filename string) go image
-func importJPG(filename string) draw.Image {
+func importPNG(filename string) draw.Image {
 	existingImageFile, err := os.Open(filename)
 	if err != nil {
 		panic(err)
@@ -80,7 +82,7 @@ func importJPG(filename string) draw.Image {
 
 	// Alternatively, since we know it is a png already
 	// we can call png.Decode() directly
-	loadedImage, err := jpeg.Decode(existingImageFile)
+	loadedImage, err := png.Decode(existingImageFile)
 	if err != nil {
 		panic(err)
 	}
@@ -92,16 +94,16 @@ func importJPG(filename string) draw.Image {
 
 }
 
-// addExtraSquares runs through each extra board defined in the config, and for each of these it 
+// addExtraSquares runs through each extra board defined in the config, and for each of these it
 // appends the correct number of generated image tiles to the given subImageArray
-func addExtraSquares (extras []ExtraSquare, tiles []Tile, subImageArray []draw.Image) []draw.Image {
+func addExtraSquares(extras []ExtraSquare, tiles []Tile, subImageArray []draw.Image) []draw.Image {
 	for _, extraBoard := range extras {
 		numExtras := extraBoard.NumOfSquares
 		if numExtras > len(tiles) {
 			fmt.Println("Your config calls for too many extra squares from a single board")
 			numExtras = len(tiles)
 		}
-		extraBoardImg := importJPG(extraBoard.Filepath)
+		extraBoardImg := importPNG(extraBoard.Filepath)
 		extraSubImageArray := generateSubImageArray(tiles, extraBoardImg)
 		subImageArray = append(subImageArray, extraSubImageArray[0:numExtras-1]...)
 	}
@@ -117,6 +119,8 @@ func generateTileArray(first Tile, nextCorner image.Point, rows, columns int) []
 
 	gapWidth := nextCorner.X - first.OppositeCorner.X
 	gapHeight := nextCorner.Y - first.OppositeCorner.Y
+	fmt.Printf("Tile Width and Height: %d x %d\n", tileWidth, tileHeight)
+	fmt.Printf("Gap Width and Height: %d x %d\n", gapWidth, gapHeight)
 
 	tileArray := []Tile{}
 	for row := 0; row < rows; row++ {
@@ -166,7 +170,7 @@ func writeImage(img draw.Image, filename string) {
 
 	// Encode takes a writer interface and an image interface
 	// We pass it the File and the RGBA
-	jpeg.Encode(outputFile, img, nil)
+	png.Encode(outputFile, img)
 
 	// Don't forget to close files
 	outputFile.Close()
@@ -174,7 +178,7 @@ func writeImage(img draw.Image, filename string) {
 }
 
 // takes in a Rand object and dimensions of the board and number of Names, calculates all random permutation of tile indices
-func generatePermutation(r *rand.Rand, rows, columns, numNames, numTiles int) [][]int {
+func generatePermutation(r *rand.Rand, rows, columns, numNames, numTiles int, testing bool) [][]int {
 	indices := []int{}
 	permutations := [][]int{}
 	useFreespace := false
@@ -182,7 +186,7 @@ func generatePermutation(r *rand.Rand, rows, columns, numNames, numTiles int) []
 	for ii := 0; ii < numTiles; ii++ {
 		indices = append(indices, ii)
 		if ii < columns*rows {
-		useFreespace = !useFreespace
+			useFreespace = !useFreespace
 		}
 	}
 
@@ -194,8 +198,12 @@ func generatePermutation(r *rand.Rand, rows, columns, numNames, numTiles int) []
 
 	for ii := 1; ii <= numNames; ii++ {
 		shuffledIndices := []int{}
-		for _, i := range r.Perm(len(indices)) {
-			shuffledIndices = append(shuffledIndices, indices[i])
+		for q, i := range r.Perm(len(indices)) {
+			if !testing {
+				shuffledIndices = append(shuffledIndices, indices[i])
+			} else {
+				shuffledIndices = append(shuffledIndices, indices[q]) //if testing, we don't shuffle anyone. Therefore, use the q (counter) instead of randomized i
+			}
 		}
 
 		if useFreespace {
@@ -223,5 +231,13 @@ func shuffleBoard(board draw.Image, images []draw.Image, tiles []Tile, newIndice
 
 	}
 
+	return board
+}
+
+func prepareTestBoard(board draw.Image, testing bool) draw.Image {
+	if testing {
+		magenta := color.RGBA{255, 0, 255, 255}
+		draw.Draw(board, board.Bounds(), &image.Uniform{magenta}, image.ZP, draw.Src)
+	}
 	return board
 }
