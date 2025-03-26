@@ -5,6 +5,22 @@ The tool takes in one input: the filename for a config file which may or may not
 
 Most BINGO boards have a 5x5 layout with a freespace in the middle. This tool can work on boards with arbitrary numbers of rows and columns. If there are an odd number of tiles, then the middle will be assumed to be a freespace.
 
+## Features
+- Turn one bingo board into as many as you want.
+
+- Generates new board for each person on your list, using their names in the filename.
+
+- Requires a bit of setup but supports any template* regardless of image resolution, colors and theming, column and row size, or even number of columns and rows.
+
+- Set an RNG seed so that you can recreate boards over and over with the same permutations (useful if you want to make a change to a board without randomizing all the generated boards every time) or set a new seed to start fresh.
+
+- Assumes the middle space is Free Space and doesn't move it around
+
+- Testing mode that helps you visualize how spaces are being calculated and fine-time your config as needed.
+
+- Extra spaces: if you don't want every board to have the same boring old set of tiles, you can add more spaces to the RNG pool by adding them to a second, third, etc board. Your generated boards will all have some subset of the larger tile set.
+
+## Config
 Bingo-tool requires several parameters in the config:
 - The filename of the bingo board to be used as a template.
 
@@ -30,3 +46,14 @@ Bingo-tool requires several parameters in the config:
 4) Run the command `bingo-tool` to create a blank config file
 5) Open the config file and fill it out according to the README
 6) Run the command `bingo-tool` again to consume the config and generate your boards.
+
+## Known pain points
+- Right now this is a simple cli tool that I'm not packaging, so to use it you'll need to install Go and build my tool yourself, then run it from the terminal. Or ask a friend to do it for you!
+
+- Configuration for a board includes painstakingly recording the locations of 3 points on your template board. You only have to do it once unless your template changes.
+
+- This tool does NOT work with bingo boards that have column/row widths/heights that change. Each tile can be any sized rectangle but they all have to be the same size; same goes for the margins between tiles.
+
+- User has to manually open a text file and add the appropriate details while maintaining the JSON format
+
+- Right now we're PNG only because that's what my friends and I use /shrug I don't think any of these is very difficult to work around but I acknowledge that the lack of packaging and user experience polish might be a turn off for some people.
