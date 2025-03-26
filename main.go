@@ -6,7 +6,6 @@ import (
 	"image/color"
 	"image/draw"
 	"image/png"
-	"io/ioutil"
 	"math/rand"
 	"os"
 )
@@ -58,11 +57,11 @@ func main() {
 // function to read config from file (filename string) Config
 func readConfig(pwd string) Config {
 	configPath := pwd + "/bingo-config.json"
-	dat, err := ioutil.ReadFile(configPath)
+	dat, err := os.ReadFile(configPath)
 	if err != nil {
 		fmt.Println(err)
 		fmt.Println("Writing template config file to your current directory")
-		err = ioutil.WriteFile(configPath, []byte(configTemplate), 0644)
+		err = os.WriteFile(configPath, []byte(configTemplate), 0644)
 		if err != nil {
 			panic(err.Error())
 		}
@@ -192,7 +191,7 @@ func generatePermutation(r *rand.Rand, rows, columns, numNames, numTiles int, te
 
 	if useFreespace {
 		freespace = (columns*rows - 1) / 2
-		fmt.Sprintf("freespace is...%d\n", freespace)
+		fmt.Printf("freespace is...%d\n", freespace)
 		indices = append(indices[:freespace], indices[freespace+1:]...) //slice out the freespace before shuffling
 	}
 
@@ -237,7 +236,7 @@ func shuffleBoard(board draw.Image, images []draw.Image, tiles []Tile, newIndice
 func prepareTestBoard(board draw.Image, testing bool) draw.Image {
 	if testing {
 		magenta := color.RGBA{255, 0, 255, 255}
-		draw.Draw(board, board.Bounds(), &image.Uniform{magenta}, image.ZP, draw.Src)
+		draw.Draw(board, board.Bounds(), &image.Uniform{magenta}, image.Point{}, draw.Src)
 	}
 	return board
 }
