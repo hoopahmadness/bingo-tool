@@ -15,9 +15,9 @@ func newTile(originX, originY, oppositeX, oppositeY int) Tile {
 	return Tile{origin, opposite}
 }
 
-func (this Tile) getDimensions() (x, y int, rect image.Rectangle) {
-	x = this.OppositeCorner.X - this.Origin.X
-	y = this.OppositeCorner.Y - this.Origin.Y
+func (t Tile) getDimensions() (x, y int, rect image.Rectangle) {
+	x = t.OppositeCorner.X - t.Origin.X
+	y = t.OppositeCorner.Y - t.Origin.Y
 
 	rect = image.Rect(0, 0, x, y)
 	return

@@ -9,6 +9,7 @@ import (
 	"io/ioutil"
 	"math/rand"
 	"os"
+	"sync"
 )
 
 var config Config
@@ -43,16 +44,24 @@ func main() {
 	permutations := generatePermutation(r, config.NumRows, config.NumColumns, len(config.Names), len(subImageArray), config.Test)
 
 	//loop over list of names
+	waitFor := sync.WaitGroup{}
 	for perm, person := range config.Names {
-		shuffledArr := permutations[perm]
-		fmt.Println(person)
-		fmt.Println(shuffledArr)
-		//shuffle board
-		newBoard := shuffleBoard(board, subImageArray, tileArray, shuffledArr)
+		go func(perm int, person string) {
+			shuffledArr := permutations[perm]
+			// fmt.Println(person)
+			// fmt.Println(shuffledArr)
+			//shuffle board
+			newBoard := shuffleBoard(board, subImageArray, tileArray, shuffledArr)
 
-		//save new copy of image
-		writeImage(newBoard, fmt.Sprintf("%s.png", person))
+			//save new copy of image
+			writeImage(newBoard, fmt.Sprintf("%s.png", person))
+			waitFor.Done()
+		}(perm, person)
+		waitFor.Add(1)
 	}
+	fmt.Println("Waiting for jobs to finish...")
+	waitFor.Wait()
+	fmt.Println("Done!")
 }
 
 // function to read config from file (filename string) Config
