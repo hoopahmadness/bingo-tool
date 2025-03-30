@@ -51,6 +51,7 @@ func main() {
 			// fmt.Println(person)
 			// fmt.Println(shuffledArr)
 			//shuffle board
+			// There is probably something thread-y going wrong here.
 			newBoard := shuffleBoard(board, subImageArray, tileArray, shuffledArr)
 
 			//save new copy of image
@@ -100,7 +101,6 @@ func importPNG(filename string) draw.Image {
 	m := image.NewRGBA(image.Rect(0, 0, b.Dx(), b.Dy()))
 	draw.Draw(m, m.Bounds(), loadedImage, b.Min, draw.Src)
 	return m
-
 }
 
 // addExtraSquares runs through each extra board defined in the config, and for each of these it
@@ -228,6 +228,9 @@ func generatePermutation(r *rand.Rand, rows, columns, numNames, numTiles int, te
 
 // function to create new image from subsets (main goimage, tiles []goimage, rects []Rectangle) goimage
 func shuffleBoard(board draw.Image, images []draw.Image, tiles []Tile, newIndices []int) draw.Image {
+	b := board.Bounds()
+	m := image.NewRGBA(image.Rect(0, 0, b.Dx(), b.Dy()))
+	draw.Draw(m, m.Bounds(), board, b.Min, draw.Src)
 
 	//	//loop over array
 	for newIndex, shuffledIndex := range newIndices {
@@ -236,8 +239,7 @@ func shuffleBoard(board draw.Image, images []draw.Image, tiles []Tile, newIndice
 		//place subimages in new locations
 		_, _, sr := tile.getDimensions()
 		r := image.Rectangle{tile.Origin, tile.Origin.Add(sr.Size())}
-		draw.Draw(board, r, subImage, sr.Min, draw.Src)
-
+		draw.Draw(m, r, subImage, sr.Min, draw.Src)
 	}
 
 	return board
