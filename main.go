@@ -232,7 +232,6 @@ func shuffleBoard(board draw.Image, images []draw.Image, tiles []Tile, newIndice
 	m := image.NewRGBA(image.Rect(0, 0, b.Dx(), b.Dy()))
 	draw.Draw(m, m.Bounds(), board, b.Min, draw.Src)
 
-	//	//loop over array
 	for newIndex, shuffledIndex := range newIndices {
 		tile := tiles[newIndex]
 		subImage := images[shuffledIndex]
@@ -242,7 +241,7 @@ func shuffleBoard(board draw.Image, images []draw.Image, tiles []Tile, newIndice
 		draw.Draw(m, r, subImage, sr.Min, draw.Src)
 	}
 
-	return board
+	return m
 }
 
 func prepareTestBoard(board draw.Image, testing bool) draw.Image {
