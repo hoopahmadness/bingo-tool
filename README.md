@@ -16,7 +16,7 @@ Most BINGO boards have a 5x5 layout with a freespace in the middle. This tool ca
 
 - Assumes the middle space is Free Space and doesn't move it around
 
-- Testing mode that helps you visualize how spaces are being calculated and fine-time your config as needed.
+- Testing mode that helps you visualize how spaces are being calculated and fine-tune your config as needed.
 
 - Extra spaces: if you don't want every board to have the same boring old set of tiles, you can add more spaces to the RNG pool by adding them to a second, third, etc board. Your generated boards will all have some subset of the larger tile set.
 
